@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if post %}Edit Post{% else %}Create Post{% endif %} - PhotoMark{% endblock %}
+{% block title %}{% if post %}Edit Post{% else %}Create Post{% endif %} - ArmorUp{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/post-form.css') }}">
@@ -9,7 +9,7 @@
 {% block content %}
 <div class="form-container">
     <header class="form-header">
-        <h1>{% if post %}Edit Post{% else %}Create Post{% endif %}</h1>
+        <h1>{% if post %}Edit Military Post{% else %}Create Military Post{% endif %}</h1>
     </header>
     
     <form method="POST" enctype="multipart/form-data" class="post-form">
@@ -18,6 +18,17 @@
             <input type="text" id="title" name="title" 
                    value="{% if post %}{{ post.title }}{% endif %}" 
                    placeholder="Enter post title..." required>
+        </div>
+
+        <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <option value="" disabled {% if not post %}selected{% endif %}>Select category</option>
+                <option value="Strategy" {% if post and post.category == 'Strategy' %}selected{% endif %}>Strategy</option>
+                <option value="Gear" {% if post and post.category == 'Gear' %}selected{% endif %}>Gear</option>
+                <option value="History" {% if post and post.category == 'History' %}selected{% endif %}>History</option>
+                <option value="Training" {% if post and post.category == 'Training' %}selected{% endif %}>Training</option>
+            </select>
         </div>
         
         <div class="form-group">
@@ -65,4 +76,3 @@ document.getElementById('image').addEventListener('change', function(e) {
 });
 </script>
 {% endblock %}
-

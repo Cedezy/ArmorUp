@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Home - PhotoMark{% endblock %}
+{% block title %}Home - ArmorUp{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
@@ -10,8 +10,8 @@
 <!-- Hero Section - Full Width -->
 <section class="hero-section">
     <div class="hero-content">
-        <h1 class="hero-title">Capture Moments,<br>Share Stories</h1>
-        <p class="hero-subtitle">Discover beautiful photography and share your own visual stories with our community of creatives on PhotoMark.</p>
+        <h1 class="hero-title">Stay Informed,<br>Honor the Service</h1>
+        <p class="hero-subtitle">ArmorUp is your military blog to read updates, share stories, and learn about military life and history.</p>
         {% if not current_user.is_authenticated %}
             <div class="hero-cta">
                 <a href="{{ url_for('register') }}" class="btn-primary btn-hero">Get Started</a>
@@ -22,20 +22,6 @@
                 <a href="{{ url_for('create_post') }}" class="btn-primary btn-hero">Create Your Post</a>
             </div>
         {% endif %}
-    </div>
-    <div class="hero-stats">
-        <div class="stat-item">
-            <span class="stat-number">{{ posts|length }}</span>
-            <span class="stat-label">Posts</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-number"><i class="fas fa-camera-retro"></i></span>
-            <span class="stat-label">PhotoMark</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-number"><i class="fas fa-star"></i></span>
-            <span class="stat-label">Community</span>
-        </div>
     </div>
 </section>
 
@@ -97,4 +83,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ post.title }} - PhotoMark{% endblock %}
+{% block title %}{{ post.title }} - ArmorUp{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/post-detail.css') }}">
@@ -16,6 +16,11 @@
             <span class="post-date">
                 <i class="fas fa-calendar"></i> {{ post.created_at.strftime('%B %d, %Y') }}
             </span>
+            {% if post.category %}
+                <span class="post-category">
+                    <i class="fas fa-shield-alt"></i> {{ post.category }}
+                </span>
+            {% endif %}
             {% if current_user.is_authenticated and current_user.id == post.user_id %}
                 <div class="post-actions-minimal">
                     <a href="{{ url_for('edit_post', post_id=post.id) }}" class="action-link" title="Edit post">
@@ -91,8 +96,7 @@
 
 <div class="back-link">
     <a href="{{ url_for('index') }}">
-        <i class="fas fa-arrow-left"></i> Back to All Posts
+        <i class="fas fa-arrow-left"></i> Back to All Military Posts
     </a>
 </div>
 {% endblock %}
-

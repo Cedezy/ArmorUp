@@ -6,9 +6,12 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
 
+# ------------------------
+# App Configuration
+# ------------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///photomark.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///armorup.db'  # military blog database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -18,13 +21,14 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message = 'Please log in to access ArmorUp.'
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-
+# ------------------------
 # Database Models
+# ------------------------
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -45,6 +49,7 @@ class Post(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     image_filename = db.Column(db.String(255), nullable=True)
+    category = db.Column(db.String(50), nullable=True)  # e.g., "Strategy", "Gear", "History"
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     comments = db.relationship('Comment', backref='post', lazy=True, cascade='all, delete-orphan')
@@ -66,10 +71,12 @@ def load_user(user_id):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-
+# ------------------------
 # Routes
+# ------------------------
 @app.route('/')
 def index():
+    """Home page showing latest military posts"""
     search_query = request.args.get('search', '')
     if search_query:
         posts = Post.query.filter(
@@ -85,6 +92,7 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """Register a new ArmorUp user"""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -123,13 +131,13 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Login ArmorUp users"""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -145,6 +153,7 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
+    """Logout ArmorUp users"""
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
@@ -153,9 +162,11 @@ def logout():
 @app.route('/post/create', methods=['GET', 'POST'])
 @login_required
 def create_post():
+    """Create a new military blog post"""
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
+        category = request.form.get('category')
         image = request.files.get('image')
         
         if not title or not content:
@@ -170,7 +181,7 @@ def create_post():
             image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
             image.save(image_path)
         
-        post = Post(title=title, content=content, image_filename=image_filename, user_id=current_user.id)
+        post = Post(title=title, content=content, image_filename=image_filename, category=category, user_id=current_user.id)
         db.session.add(post)
         db.session.commit()
         
@@ -182,6 +193,7 @@ def create_post():
 
 @app.route('/post/<int:post_id>')
 def view_post(post_id):
+    """View a single military post"""
     post = Post.query.get_or_404(post_id)
     comments = Comment.query.filter_by(post_id=post_id).order_by(Comment.created_at.asc()).all()
     return render_template('post_detail.html', post=post, comments=comments)
@@ -190,6 +202,7 @@ def view_post(post_id):
 @app.route('/post/<int:post_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_post(post_id):
+    """Edit a post (only author)"""
     post = Post.query.get_or_404(post_id)
     
     if post.user_id != current_user.id:
@@ -199,16 +212,15 @@ def edit_post(post_id):
     if request.method == 'POST':
         post.title = request.form.get('title')
         post.content = request.form.get('content')
+        post.category = request.form.get('category')
         
         image = request.files.get('image')
         if image and image.filename and allowed_file(image.filename):
-            # Delete old image if exists
             if post.image_filename:
                 old_image_path = os.path.join(app.config['UPLOAD_FOLDER'], post.image_filename)
                 if os.path.exists(old_image_path):
                     os.remove(old_image_path)
             
-            # Save new image
             filename = secure_filename(image.filename)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
             post.image_filename = timestamp + filename
@@ -225,13 +237,13 @@ def edit_post(post_id):
 @app.route('/post/<int:post_id>/delete', methods=['POST'])
 @login_required
 def delete_post(post_id):
+    """Delete a military post (only author)"""
     post = Post.query.get_or_404(post_id)
     
     if post.user_id != current_user.id:
         flash('You do not have permission to delete this post.', 'error')
         return redirect(url_for('view_post', post_id=post_id))
     
-    # Delete associated image
     if post.image_filename:
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], post.image_filename)
         if os.path.exists(image_path):
@@ -246,6 +258,7 @@ def delete_post(post_id):
 @app.route('/post/<int:post_id>/comment', methods=['POST'])
 @login_required
 def add_comment(post_id):
+    """Add a comment to a military post"""
     post = Post.query.get_or_404(post_id)
     content = request.form.get('content')
     
@@ -264,6 +277,7 @@ def add_comment(post_id):
 @app.route('/profile')
 @login_required
 def profile():
+    """User profile showing their military posts"""
     posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.created_at.desc()).all()
     total_posts = len(posts)
     return render_template('profile.html', posts=posts, total_posts=total_posts)
@@ -273,4 +287,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
